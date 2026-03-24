@@ -8,11 +8,6 @@ export async function listDriveFiles(
 ) {
   try {
     const accessToken = req.session?.accessToken;
-
-    
-    console.log("LIST DRIVE FILES HIT");
-    console.log("HAS ACCESS TOKEN:", Boolean(accessToken));
-
     if (!accessToken) {
       return res.status(401).json({
         error: {

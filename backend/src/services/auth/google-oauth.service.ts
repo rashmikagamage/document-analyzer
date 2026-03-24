@@ -4,6 +4,7 @@ import { env } from "../../config/env.js";
 const DRIVE_READONLY_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 
 export function createGoogleOAuthClient() {
+  console.log(env.GOOGLE_REDIRECT_URI)
   return new google.auth.OAuth2(
     env.GOOGLE_CLIENT_ID,
     env.GOOGLE_CLIENT_SECRET,
