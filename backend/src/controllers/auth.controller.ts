@@ -11,6 +11,7 @@ import {
 } from "../services/auth/session.service.js";
 
 export async function startGoogleAuth(
+  
   _req: Request,
   res: Response,
   next: NextFunction
@@ -18,6 +19,9 @@ export async function startGoogleAuth(
   try {
     const state = "google-drive-auth";
     const url = generateGoogleAuthUrl(state);
+    console.log("==== GOOGLE AUTH DEBUG ====");
+    console.log("ENV REDIRECT URI:", env.GOOGLE_REDIRECT_URI);
+    console.log("GENERATED GOOGLE URL:", url);
     res.redirect(url);
   } catch (error) {
     next(error);
