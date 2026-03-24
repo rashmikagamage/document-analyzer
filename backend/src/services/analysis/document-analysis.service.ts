@@ -7,6 +7,8 @@ export const SMALL_DOCUMENT_THRESHOLD = 120_000;
 
 const CHUNK_SIZE = 4_000;
 const CHUNK_OVERLAP = 400;
+const REQUEST_TIMEOUT_MS = 15_000;
+const MAX_CHUNKS = 8;
 
 const finalAnalysisSchema = z.object({
   shortSummary: z
@@ -39,9 +41,14 @@ const model = new ChatGoogleGenerativeAI({
   model: "gemini-2.5-flash",
   temperature: 0.2,
   apiKey: env.GOOGLE_API_KEY,
-  timeout: 15_000,
   maxRetries: 3,
 });
+
+function getInvokeOptions() {
+  return {
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  };
+}
 
 /**
  * One-shot analysis for smaller PDFs.
@@ -74,13 +81,16 @@ ${documentText}
 """
 `;
 
-  return structuredModel.invoke(prompt);
+  return structuredModel.invoke(prompt, getInvokeOptions());
 }
 
 /**
  * Chunk-level summary for large PDFs.
  */
-async function summarizeChunk(text: string, chunkIndex: number) {
+async function summarizeChunk(
+  text: string,
+  chunkIndex: number
+): Promise<z.infer<typeof chunkSummarySchema>> {
   const structuredModel = model.withStructuredOutput(chunkSummarySchema);
 
   const prompt = `
@@ -104,7 +114,7 @@ ${text}
 """
 `;
 
-  return structuredModel.invoke(prompt);
+  return structuredModel.invoke(prompt, getInvokeOptions());
 }
 
 /**
@@ -151,7 +161,7 @@ ${combinedContext}
 """
 `;
 
-  return structuredModel.invoke(prompt);
+  return structuredModel.invoke(prompt, getInvokeOptions());
 }
 
 /**
@@ -163,6 +173,10 @@ export async function analyzeDocumentText(
   documentText: string,
   fileName?: string
 ): Promise<DocumentAnalysisResult> {
+  if (!documentText.trim()) {
+    throw new Error("Document text is empty.");
+  }
+
   if (documentText.length <= SMALL_DOCUMENT_THRESHOLD) {
     return analyzeSmallDocument(documentText, fileName);
   }
@@ -176,7 +190,7 @@ export async function analyzeDocumentText(
 
   // Important free-tier guardrail:
   // do not let one huge PDF consume too many model calls.
-  const limitedChunks = chunks.slice(0, 8);
+  const limitedChunks = chunks.slice(0, MAX_CHUNKS);
 
   const chunkSummaries = await Promise.all(
     limitedChunks.map((chunk, index) => summarizeChunk(chunk, index))
