@@ -31,6 +31,8 @@ A full-stack application that connects to Google Drive via OAuth2, retrieves use
 
 ---
 
+<img src="diagrams/architecture.png" width="700"/>
+
 ## 🔐 Authentication
 
 - Google OAuth2
