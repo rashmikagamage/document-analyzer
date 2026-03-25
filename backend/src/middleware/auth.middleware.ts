@@ -5,6 +5,8 @@ import {
   sessionCookie,
 } from "../services/auth/session.service.js";
 
+// Resolve the signed session cookie into a server-side session and attach it
+// to the request. Reject requests that do not have a valid authenticated session.
 export function requireAuth(
   req: Request,
   _res: Response,
@@ -12,10 +14,6 @@ export function requireAuth(
 ) {
   const signedSessionId = req.cookies?.[sessionCookie.name];
   const session = readSession(signedSessionId);
-
-  console.log("AUTH COOKIE PRESENT:", Boolean(signedSessionId));
-  console.log("AUTH COOKIE VALUE:", signedSessionId);
-  console.log("SESSION FOUND:", Boolean(session));
   
   if (!session) {
     return next(

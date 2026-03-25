@@ -8,7 +8,7 @@ export function Home() {
       <div className="page-container">
         <div className="topbar">
           <div className="brand">
-            <div className="brand-mark">MS</div>
+            <div className="brand-mark">SD</div>
             <div className="brand-copy">
               <h1>Settify - DocAnalyzer</h1>
               <p>Connected services dashboard with document intelligence</p>
@@ -49,7 +49,7 @@ export function Home() {
                 <h3>What you get</h3>
                 <p>
                   OAuth-based Google Drive access, recent PDF discovery, and
-                  on-demand analysis in a clean dashboard flow.
+                  on-demand analysis.
                 </p>
               </div>
 
@@ -57,7 +57,7 @@ export function Home() {
                 <h3>Analysis output</h3>
                 <p>
                   One-sentence summary, a longer summary paragraph, and 10
-                  high-signal keywords presented in a popup modal.
+                  top keywords.
                 </p>
               </div>
 

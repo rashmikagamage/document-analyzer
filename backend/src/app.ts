@@ -15,7 +15,8 @@ import { analysisRouter } from "./routes/analysis.routes.js";
 
 export const app = express();
 
-// Required when running behind a reverse proxy / tunnel / load balancer.
+// Trust the first proxy hop because the app runs behind a reverse proxy/tunnel.
+// This is required for correct client IP handling and secure cookie behavior.
 app.set("trust proxy", 1);
 
 const allowedOrigins = new Set([
@@ -26,7 +27,8 @@ const allowedOrigins = new Set([
 
 app.use(requestIdMiddleware);
 
-
+// Allow the configured frontend origin to make credentialed requests.
+// The browser must be allowed to send cookies for session-based auth.
 app.use(
   cors({
     origin(origin, callback) {
@@ -50,8 +52,8 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use(
   rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 100,
+    windowMs:  60 * 1000,
+    limit: 50,
     standardHeaders: true,
     legacyHeaders: false,
   })

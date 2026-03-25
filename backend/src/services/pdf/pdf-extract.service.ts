@@ -17,6 +17,8 @@ export async function extractPdfText(pdfBuffer: Buffer): Promise<string> {
     try {
         const result = await parser.getText();
 
+        // Normalize extracted text before analysis to reduce noisy whitespace and keep
+        // prompt size predictable for downstream LLM processing.
         const normalized = result.text
             .replace(/\r\n/g, "\n")
             .replace(/\n{3,}/g, "\n\n")
@@ -30,7 +32,9 @@ export async function extractPdfText(pdfBuffer: Buffer): Promise<string> {
                 expose: true,
             });
         }
-        console.log("Extracted PDF text length:", normalized.length);
+        
+        // Bound extracted text size for latency and cost control.
+        // Large documents are handled later by staged summarization.
         return normalized.slice(0, MAX_TEXT_LENGTH);
     } finally {
         await parser.destroy();

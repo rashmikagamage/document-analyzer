@@ -10,8 +10,10 @@ import {
   sessionCookie,
 } from "../services/auth/session.service.js";
 
+// Start the server-side OAuth flow. The backend owns the client secret and
+// redirects the browser to Google with the configured callback URL.
 export async function startGoogleAuth(
-  
+
   _req: Request,
   res: Response,
   next: NextFunction
@@ -19,15 +21,14 @@ export async function startGoogleAuth(
   try {
     const state = "google-drive-auth";
     const url = generateGoogleAuthUrl(state);
-    console.log("==== GOOGLE AUTH DEBUG ====");
-    console.log("ENV REDIRECT URI:", env.GOOGLE_REDIRECT_URI);
-    console.log("GENERATED GOOGLE URL:", url);
     res.redirect(url);
   } catch (error) {
     next(error);
   }
 }
 
+// Set an HTTP-only session cookie so the browser can authenticate subsequent
+// API calls without exposing tokens to frontend JavaScript.
 export async function googleAuthCallback(
   req: Request,
   res: Response,
@@ -60,13 +61,18 @@ export async function googleAuthCallback(
       expiryDate: tokens.expiry_date ?? null,
     });
 
+    // For same-origin HTTPS deployment, secure + sameSite=lax supports normal app
+    // navigation and OAuth redirect flows while keeping the cookie inaccessible to JS.
     res.cookie(sessionCookie.name, signedSessionId, {
       httpOnly: true,
-      secure: env.NODE_ENV === "production",
+      secure: true,
       sameSite: "lax",
       path: "/",
+      maxAge: 1000 * 60 * 60 * 8,
     });
 
+    // After the backend finishes the OAuth code exchange and session creation,
+    // send the user back to the frontend dashboard.
     res.redirect(`${env.FRONTEND_URL}/dashboard`);
   } catch (error) {
     next(error);
@@ -74,17 +80,17 @@ export async function googleAuthCallback(
 }
 
 export async function getSessionStatus(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const isAuthenticated = Boolean(req.session?.accessToken);
-  
-      res.status(200).json({
-        authenticated: isAuthenticated,
-      });
-    } catch (error) {
-      next(error);
-    }
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const isAuthenticated = Boolean(req.session?.accessToken);
+
+    res.status(200).json({
+      authenticated: isAuthenticated,
+    });
+  } catch (error) {
+    next(error);
+  }
 }

@@ -3,6 +3,9 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { env } from "../../config/env.js";
 
+// Small documents can be analyzed in one pass (this version has a limit of 120000 because free LLM API has a limit).
+// Larger documents switch to staged summarization to stay within model/context
+// limits and improve reliability under free-tier rate and latency constraints.
 export const SMALL_DOCUMENT_THRESHOLD = 120_000;
 
 const CHUNK_SIZE = 4_000;
@@ -23,6 +26,10 @@ const finalAnalysisSchema = z.object({
     .describe("Exactly 10 high-signal keywords or short key phrases."),
 });
 
+// Staged summarization pipeline:
+// 1) split document into chunks
+// 2) summarize each chunk independently
+// 3) merge chunk summaries into the final structured response
 const chunkSummarySchema = z.object({
   summary: z.string().describe("A concise summary of this chunk."),
   keyPoints: z

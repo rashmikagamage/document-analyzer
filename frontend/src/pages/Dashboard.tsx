@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getSessionStatus } from "../api/auth";
-import { getDriveFiles, type DriveFile } from "../api/drive";
+import { getDriveFiles } from "../api/drive";
 import {
   analyzeDocument,
   type AnalyzeDocumentResponse,
@@ -10,11 +10,19 @@ import { AnalysisModal } from "../components/AnalysisModal";
 import { Button } from "../components/Button";
 import { FileList } from "../components/FileList";
 import { Spinner } from "../components/Spinner";
+import { useDashboardCache } from "../context/DashboardContexct";
 
 export function Dashboard() {
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
-  const [files, setFiles] = useState<DriveFile[]>([]);
-  const [pageLoading, setPageLoading] = useState(true);
+  const {
+    authenticated,
+    files,
+    hasLoaded,
+    setAuthenticated,
+    setFiles,
+    setHasLoaded,
+  } = useDashboardCache();
+
+  const [pageLoading, setPageLoading] = useState(!hasLoaded);
   const [pageError, setPageError] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,6 +33,9 @@ export function Dashboard() {
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (hasLoaded) {
+      return;
+    }
     async function loadDashboard() {
       try {
         setPageLoading(true);
@@ -35,11 +46,13 @@ export function Dashboard() {
 
         if (!session.authenticated) {
           setFiles([]);
+          setHasLoaded(true);
           return;
         }
 
         const result = await getDriveFiles();
         setFiles(result.files);
+        setHasLoaded(true);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to load dashboard.";
@@ -50,7 +63,7 @@ export function Dashboard() {
     }
 
     void loadDashboard();
-  }, []);
+  }, [hasLoaded, setAuthenticated, setFiles, setHasLoaded]);
 
   async function handleAnalyze(fileId: string) {
     if (analysisLoading) {
@@ -104,7 +117,7 @@ export function Dashboard() {
       <div className="page-container">
         <div className="topbar">
           <div className="brand">
-            <div className="brand-mark">MS</div>
+            <div className="brand-mark">SD</div>
             <div className="brand-copy">
               <h2>Document Dashboard</h2>
               <p>{subtitle}</p>
@@ -150,9 +163,7 @@ export function Dashboard() {
               <div style={{ marginTop: 6 }}>{pageError}</div>
             </div>
           )}
-          <p className="section-subtitle">
-            Analyses run on demand, large PDFs use staged summarization, and unchanged files can reuse cached results.
-          </p>
+
           {!pageLoading && !pageError && authenticated && (
             <FileList
               files={files}

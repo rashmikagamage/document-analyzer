@@ -29,6 +29,7 @@ function isRateLimitError(error: unknown): boolean {
   );
 }
 
+
 export async function analyzeDocument(
   req: Request,
   res: Response,
@@ -57,8 +58,8 @@ export async function analyzeDocument(
       });
     }
 
-    // Engineering judgment:
-    // return cached analysis if the file version has not changed.
+    // Reuse a previous analysis result when the file version has not changed.
+    // This avoids repeated model calls for the same document and reduces cost/latency.
     const cached = getCachedAnalysis(fileId, metadata.modifiedTime);
     if (cached) {
       return res.status(200).json({

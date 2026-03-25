@@ -8,6 +8,9 @@ export type CachedAnalysisEntry = {
   createdAt: number;
 };
 
+// Demo-only in-memory cache for analysis reuse.
+// In production, move this to a shared cache or database so results survive
+
 const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6 hours
 
 const analysisCache = new Map<string, CachedAnalysisEntry>();
